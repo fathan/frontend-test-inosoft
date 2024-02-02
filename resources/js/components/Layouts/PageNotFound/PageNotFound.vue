@@ -21,3 +21,9 @@
     </div>
   </section>
 </template>
+
+<script>
+export default {
+  name: 'PageNotFound'
+}
+</script>
