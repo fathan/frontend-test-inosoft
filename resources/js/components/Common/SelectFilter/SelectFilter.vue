@@ -127,9 +127,20 @@ export default {
       debounce: null
     };
   },
+  created () {
+    this.$eventBus.$on('closeSelectFilter', () => {
+      this.visibleDropdown = false;
+    });
+  },
   methods: {
     onHandleVisibleDropdown () {
-      this.visibleDropdown = !this.visibleDropdown;
+      if (!this.visibleDropdown) {
+        this.$eventBus.$emit('closeSelectFilter');
+        this.visibleDropdown = true;
+      }
+      else {
+        this.visibleDropdown = false;
+      }
     },
     onClickResetFilter (category) {
       this.$emit('onResetData', {
