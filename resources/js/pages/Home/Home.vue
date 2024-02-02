@@ -34,7 +34,7 @@
 
     <section class="w-full">
       <div class="container mx-auto flex flex-col lg:flex-row gap-4">
-        <div class="w-full bg-white border border-gray-200 shadow-md rounded-lg p-4 -mt-8 z-10">
+        <div class="w-full bg-white border border-gray-200 shadow-md rounded-lg p-4 -mt-8 z-10 oveflow-hidden h-28">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <SelectFilter
@@ -44,6 +44,7 @@
                 :options="filterOptionsProductType"
                 @onSelectData="onHandleSelectdata($event)"
                 @onResetData="onHandleResetdata($event)"
+                @filterListItem="onHandleFilterListItem($event)"
               />
             </div>
             <div>
@@ -54,6 +55,7 @@
                 :options="filterOptionsSize"
                 @onSelectData="onHandleSelectdata($event)"
                 @onResetData="onHandleResetdata($event)"
+                @filterListItem="onHandleFilterListItem($event)"
               />
             </div>
             <div>
@@ -64,6 +66,7 @@
                 :options="filterOptionsGrade"
                 @onSelectData="onHandleSelectdata($event)"
                 @onResetData="onHandleResetdata($event)"
+                @filterListItem="onHandleFilterListItem($event)"
               />
             </div>
             <div>
@@ -74,6 +77,7 @@
                 :options="filterOptionsConnection"
                 @onSelectData="onHandleSelectdata($event)"
                 @onResetData="onHandleResetdata($event)"
+                @filterListItem="onHandleFilterListItem($event)"
               />
             </div>
           </div>
@@ -246,6 +250,7 @@
 <script>
 /* eslint-disable max-len */
 import { mapState } from 'vuex';
+import { sleep } from '@utils/app';
 
 import CardSectionFirst from '@components/Fragments/Home/CardSectionFirst';
 import CardSectionSecond from '@components/Fragments/Home/CardSectionSecond';
@@ -414,7 +419,12 @@ export default {
 
       return connectionQtyArray;
     },
-    async initialize () {
+    async initialize (withLoader = false) {
+      if (withLoader) {
+        this.$eventBus.$emit('openLoaderFullPage');
+        await sleep(1000);
+      }
+
       const res = await this.getAllProduct();
       const body = {};
 
@@ -456,6 +466,10 @@ export default {
       
       const resDataConnection = this.getDataConnection(resFilterData);
       this.$store.dispatch('app/setFilterOptionsConnection', resDataConnection);
+
+      if (withLoader) {
+        this.$eventBus.$emit('closeLoaderFullPage');
+      }
     },
     onHandleSelectdata (event) {
       if (event.category === '1') {
@@ -471,7 +485,7 @@ export default {
         this.$store.dispatch('app/setSelectedFilterConnection', event.data.connection);
       }
 
-      this.initialize();
+      this.initialize(true);
     },
     onHandleResetdata (event) {
       if (event.category === '1') {
@@ -487,7 +501,50 @@ export default {
         this.$store.dispatch('app/setSelectedFilterConnection', '');
       }
 
-      this.initialize();
+      this.initialize(true);
+    },
+    onHandleFilterListItem (event) {
+      const valueSearch = new RegExp(event.value, 'i');
+
+      if (event.category === '1') {
+        const filtered = this.filterOptionsProductType.filter((item) => {
+          return valueSearch.test(item.product_type);
+        });
+
+        if (filtered.length > 0) {
+          this.$store.dispatch('app/setFilterOptionsProductType', filtered);
+        }
+      }
+      if (event.category === '2') {
+        const filtered = this.filterOptionsSize.filter((item) => {
+          return valueSearch.test(item.size);
+        });
+
+        if (filtered.length > 0) {
+          this.$store.dispatch('app/setFilterOptionsSize', filtered);
+        }
+      }
+      if (event.category === '3') {
+        const filtered = this.filterOptionsGrade.filter((item) => {
+          return valueSearch.test(item.grade);
+        });
+
+        if (filtered.length > 0) {
+          this.$store.dispatch('app/setFilterOptionsGrade', filtered);
+        }
+      }
+      if (event.category === '4') {
+        const filtered = this.filterOptionsConnection.filter((item) => {
+          return valueSearch.test(item.connection);
+        });
+
+        if (filtered.length > 0) {
+          this.$store.dispatch('app/setFilterOptionsConnection', filtered);
+        }
+      }
+      if (event.value === '') {
+        this.initialize();
+      }
     }
   }
 };

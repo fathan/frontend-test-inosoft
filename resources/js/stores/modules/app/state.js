@@ -7,8 +7,7 @@ const state = {
   filterOptionsGrade: [],
   selectedFilterGrade: '',
   filterOptionsConnection: [],
-  selectedFilterConnection: '',
-  overlayLoading: false
+  selectedFilterConnection: ''
 };
 
 export default state;

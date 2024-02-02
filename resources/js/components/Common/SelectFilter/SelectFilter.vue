@@ -57,9 +57,11 @@
             />
           </div>
           <input
+            v-model="searchValue"
             type="text"
             class="block w-full p-2 pl-6 ps-10 text-sm text-gray-900 border-b border-gray-300 focus:outline-none focus:ring-white"
             placeholder="Search"
+            @keyup="onHandleFilterListItem"
           >
         </div>
       </div>
@@ -120,7 +122,9 @@ export default {
   },
   data () {
     return {
-      visibleDropdown: false
+      visibleDropdown: false,
+      searchValue: '',
+      debounce: null
     };
   },
   methods: {
@@ -162,6 +166,18 @@ export default {
       });
 
       this.onHandleVisibleDropdown();
+    },
+    onHandleFilterListItem () {
+      clearTimeout(this.debounce);
+      this.debounce = setTimeout(() => {
+        const value = this.searchValue;
+        const category = this.category;
+
+        this.$emit('filterListItem', {
+          category,
+          value
+        });
+      }, 1000);
     }
   }
 };

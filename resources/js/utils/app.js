@@ -3,6 +3,11 @@ function formatedNumber (number, format = '.') {
   return formattedNumber;
 }
 
+const sleep = (ms) => new Promise((resolve) => {
+  setTimeout(resolve, ms);
+});
+
 export {
-  formatedNumber
+  formatedNumber,
+  sleep
 };
