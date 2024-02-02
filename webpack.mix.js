@@ -50,6 +50,7 @@ mix
         '@plugins': path.resolve('resources/js/plugins'),
         '@routers': path.resolve('resources/js/routers'),
         '@stores': path.resolve('resources/js/stores'),
+        '@utils': path.resolve('resources/js/utils'),
         '@styles': path.resolve('resources/styles'),
         '@js': path.resolve('public/js'),
         '@css': path.resolve('public/css'),

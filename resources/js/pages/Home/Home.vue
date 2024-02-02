@@ -35,7 +35,48 @@
     <section class="w-full">
       <div class="container mx-auto flex flex-col lg:flex-row gap-4">
         <div class="w-full bg-white border border-gray-200 shadow-md rounded-lg p-4 -mt-8 z-10">
-          test
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <SelectFilter
+                category="1"
+                title="Product Type"
+                :selectedValue="selectedFilterProductType"
+                :options="filterOptionsProductType"
+                @onSelectData="onHandleSelectdata($event)"
+                @onResetData="onHandleResetdata($event)"
+              />
+            </div>
+            <div>
+              <SelectFilter
+                category="2"
+                title="Size"
+                :selectedValue="selectedFilterSize"
+                :options="filterOptionsSize"
+                @onSelectData="onHandleSelectdata($event)"
+                @onResetData="onHandleResetdata($event)"
+              />
+            </div>
+            <div>
+              <SelectFilter
+                category="3"
+                title="Grade"
+                :selectedValue="selectedFilterGrade"
+                :options="filterOptionsGrade"
+                @onSelectData="onHandleSelectdata($event)"
+                @onResetData="onHandleResetdata($event)"
+              />
+            </div>
+            <div>
+              <SelectFilter
+                category="4"
+                title="Connection"
+                :selectedValue="selectedFilterConnection"
+                :options="filterOptionsConnection"
+                @onSelectData="onHandleSelectdata($event)"
+                @onResetData="onHandleResetdata($event)"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -204,8 +245,12 @@
 
 <script>
 /* eslint-disable max-len */
+import { mapState } from 'vuex';
+
 import CardSectionFirst from '@components/Fragments/Home/CardSectionFirst';
 import CardSectionSecond from '@components/Fragments/Home/CardSectionSecond';
+
+import ProductServices from '@services/api/product';
 
 import GlobeSvg from './../../../assets/svg/globe.svg';
 import DollarSvg from './../../../assets/svg/dollar.svg';
@@ -244,6 +289,206 @@ export default {
       landingImage1: LandingImage1,
       landingImage2: LandingImage2
     };
+  },
+  computed: {
+    ...mapState('app', {
+      filterOptionsProductType: (state) => state.filterOptionsProductType,
+      selectedFilterProductType: (state) => state.selectedFilterProductType,
+      filterOptionsSize: (state) => state.filterOptionsSize,
+      selectedFilterSize: (state) => state.selectedFilterSize,
+      filterOptionsGrade: (state) => state.filterOptionsGrade,
+      selectedFilterGrade: (state) => state.selectedFilterGrade,
+      filterOptionsConnection: (state) => state.filterOptionsConnection,
+      selectedFilterConnection: (state) => state.selectedFilterConnection
+    })
+  },
+  mounted () {
+    this.initialize();
+  },
+  methods: {
+    async getAllProduct () {
+      try {
+        let response = await ProductServices.getProducts();
+        return response;
+      }
+      catch (error) {
+        console.log(error);
+      }
+    },
+    filterData (data, paramFilter) {
+      let filterCriteria = paramFilter;
+
+      const applyFilter = (data, criteria) => {
+        if (!criteria) {
+          return data; 
+        }
+        return data.filter((item) => {
+          for (const key in criteria) {
+            if (item[key] !== criteria[key]) {
+              return false;
+            }
+          }
+          return true;
+        });
+      };
+
+      const filteredData = applyFilter(data, filterCriteria);
+      const notFilteredData = data.filter((item) => !applyFilter([item], filterCriteria).length);
+      const modifiedNotFilteredData = notFilteredData.map((item) => {
+        return { ...item, qty: 0 };
+      });
+
+      const combinedData = [...filteredData, ...modifiedNotFilteredData];
+
+      return combinedData;
+    },
+    getDataProductType (data) {
+      const productTypeQtySum = data.reduce((acc, curr) => {
+        if (acc[curr.product_type]) {
+          acc[curr.product_type] += parseInt(curr.qty);
+        }
+        else {
+          acc[curr.product_type] = parseInt(curr.qty);
+        }
+        return acc;
+      }, {});
+
+      const productTypeQtyArray = Object.keys(productTypeQtySum).map((productType) => ({
+        product_type: productType,
+        total_qty: productTypeQtySum[productType]
+      }));
+
+      return productTypeQtyArray;
+    },
+    getDataSize (data) {
+      const sizeQtySum = data.reduce((acc, curr) => {
+        if (acc[curr.size]) {
+          acc[curr.size] += parseInt(curr.qty);
+        }
+        else {
+          acc[curr.size] = parseInt(curr.qty);
+        }
+        return acc;
+      }, {});
+
+      const sizeQtyArray = Object.keys(sizeQtySum).map((size) => ({
+        size,
+        total_qty: sizeQtySum[size]
+      }));
+
+      return sizeQtyArray;
+    },
+    getDataGrade (data) {
+      const gradeQtySum = data.reduce((acc, curr) => {
+        if (acc[curr.grade]) {
+          acc[curr.grade] += parseInt(curr.qty);
+        }
+        else {
+          acc[curr.grade] = parseInt(curr.qty);
+        }
+        return acc;
+      }, {});
+
+      const gradeQtyArray = Object.keys(gradeQtySum).map((grade) => ({
+        grade,
+        total_qty: gradeQtySum[grade]
+      }));
+
+      return gradeQtyArray;
+    },
+    getDataConnection (data) {
+      const connectionQtySum = data.reduce((acc, curr) => {
+        if (acc[curr.connection]) {
+          acc[curr.connection] += parseInt(curr.qty);
+        }
+        else {
+          acc[curr.connection] = parseInt(curr.qty);
+        }
+        return acc;
+      }, {});
+
+      const connectionQtyArray = Object.keys(connectionQtySum).map((connection) => ({
+        connection,
+        total_qty: connectionQtySum[connection]
+      }));
+
+      return connectionQtyArray;
+    },
+    async initialize () {
+      const res = await this.getAllProduct();
+      const body = {};
+
+      if (this.selectedFilterProductType !== '') {
+        Object.assign(body, {
+          product_type: this.selectedFilterProductType
+        });
+      }
+      if (this.selectedFilterSize !== '') {
+        Object.assign(body, {
+          size: this.selectedFilterSize
+        });
+      }
+      if (this.selectedFilterGrade !== '') {
+        Object.assign(body, {
+          grade: this.selectedFilterGrade
+        });
+      }
+      if (this.selectedFilterConnection !== '') {
+        Object.assign(body, {
+          connection: this.selectedFilterConnection
+        });
+      }
+
+      // ////////////////////////////////////////////////
+
+      const resFilterData = this.filterData(res, body);
+
+      // ////////////////////////////////////////////////
+      
+      const resDataProductType = this.getDataProductType(resFilterData);
+      this.$store.dispatch('app/setFilterOptionsProductType', resDataProductType);
+
+      const resDatasSize = this.getDataSize(resFilterData);
+      this.$store.dispatch('app/setFilterOptionsSize', resDatasSize);
+      
+      const resDataGrade = this.getDataGrade(resFilterData);
+      this.$store.dispatch('app/setFilterOptionsGrade', resDataGrade);
+      
+      const resDataConnection = this.getDataConnection(resFilterData);
+      this.$store.dispatch('app/setFilterOptionsConnection', resDataConnection);
+    },
+    onHandleSelectdata (event) {
+      if (event.category === '1') {
+        this.$store.dispatch('app/setSelectedFilterProductType', event.data.product_type);
+      }
+      if (event.category === '2') {
+        this.$store.dispatch('app/setSelectedFilterSize', event.data.size);
+      }
+      if (event.category === '3') {
+        this.$store.dispatch('app/setSelectedFilterGrade', event.data.grade);
+      }
+      if (event.category === '4') {
+        this.$store.dispatch('app/setSelectedFilterConnection', event.data.connection);
+      }
+
+      this.initialize();
+    },
+    onHandleResetdata (event) {
+      if (event.category === '1') {
+        this.$store.dispatch('app/setSelectedFilterProductType', '');
+      }
+      if (event.category === '2') {
+        this.$store.dispatch('app/setSelectedFilterSize', '');
+      }
+      if (event.category === '3') {
+        this.$store.dispatch('app/setSelectedFilterGrade', '');
+      }
+      if (event.category === '4') {
+        this.$store.dispatch('app/setSelectedFilterConnection', '');
+      }
+
+      this.initialize();
+    }
   }
 };
 </script>
